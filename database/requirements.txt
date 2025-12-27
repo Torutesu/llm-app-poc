@@ -1,0 +1,12 @@
+# Database Requirements
+
+# SQLAlchemy ORM
+sqlalchemy==2.0.25
+alembic==1.13.1  # Database migrations
+
+# PostgreSQL driver
+psycopg2-binary==2.9.9
+
+# Optional: async database support
+# asyncpg==0.29.0
+# sqlalchemy[asyncio]==2.0.25

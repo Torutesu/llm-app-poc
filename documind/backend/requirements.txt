@@ -1,0 +1,28 @@
+# Core Pathway dependencies
+pathway>=0.12.0
+python-dotenv
+
+# API Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# Authentication & Security
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+python-multipart
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+psycopg2-binary>=2.9.9
+
+# Storage & File handling
+boto3>=1.28.0
+google-cloud-storage>=2.10.0
+azure-storage-blob>=12.19.0
+
+# Additional utilities
+python-jose[cryptography]>=3.3.0
+redis>=5.0.0
+celery>=5.3.0

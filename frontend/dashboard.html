@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LLM App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .session-list {
+            list-style: none;
+        }
+
+        .session-item {
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-device {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .session-details {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .session-current {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+            padding: 8px 16px;
+        }
+
+        .tfa-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tfa-enabled {
+            color: #2e7d32;
+            font-weight: 500;
+        }
+
+        .tfa-disabled {
+            color: #f57c00;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 LLM App Dashboard</h1>
+        <div class="header-actions">
+            <span id="userEmail" style="color: #666; margin-right: 12px;"></span>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- User Profile -->
+        <div class="card">
+            <h2>👤 User Profile</h2>
+            <div id="profileLoading" class="loading">
+                <div class="spinner"></div>
+            </div>
+            <div id="profileContent" style="display: none;">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">User ID</div>
+                        <div class="info-value" id="userId"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value" id="userEmailInfo"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Name</div>
+                        <div class="info-value" id="userName"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Roles</div>
+                        <div class="info-value" id="userRoles"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Account Status</div>
+                        <div class="info-value">
+                            <span class="badge badge-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Last Login</div>
+                        <div class="info-value" id="lastLogin"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-Factor Authentication -->
+        <div class="card">
+            <h2>🔒 Two-Factor Authentication</h2>
+            <div id="tfaLoading" class="loading">
+                <div class="spinner"></div>
+            </div>
+            <div id="tfaContent" style="display: none;">
+                <div class="tfa-status">
+                    <div>
+                        <div style="font-weight: 500; margin-bottom: 4px;">Status</div>
+                        <div id="tfaStatus"></div>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="location.href='2fa-setup.html'">
+                            Manage 2FA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Sessions -->
+        <div class="card">
+            <h2>📱 Active Sessions</h2>
+            <div id="sessionsLoading" class="loading">
+                <div class="spinner"></div>
+            </div>
+            <div id="sessionsContent" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <p style="color: #666; font-size: 14px;">
+                        Manage your active sessions across devices
+                    </p>
+                    <button class="btn btn-danger" onclick="logoutAllDevices()">
+                        Logout All Devices
+                    </button>
+                </div>
+                <ul id="sessionsList" class="session-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let accessToken = localStorage.getItem('accessToken');
+        let sessionId = localStorage.getItem('sessionId');
+
+        console.log('Dashboard loaded');
+        console.log('Access token:', accessToken ? 'Present' : 'Missing');
+        console.log('Session ID:', sessionId ? 'Present' : 'Missing');
+
+        // Check authentication
+        if (!accessToken) {
+            console.log('No access token, redirecting to login');
+            window.location.href = 'login.html';
+        } else {
+            console.log('Access token found, loading dashboard data');
+        }
+
+        // API helper
+        async function apiCall(endpoint, options = {}) {
+            console.log(`API Call: ${endpoint}`);
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-Session-ID': sessionId || '',
+                    ...options.headers,
+                },
+            });
+
+            console.log(`Response status: ${response.status}`);
+
+            if (response.status === 401) {
+                console.log('401 Unauthorized - clearing tokens and redirecting');
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('API Error:', error);
+                throw new Error(error.detail || 'Request failed');
+            }
+
+            const data = await response.json();
+            console.log('API Response:', data);
+            return data;
+        }
+
+        // Load user profile
+        async function loadProfile() {
+            try {
+                const profile = await apiCall('/auth/me');
+
+                document.getElementById('userId').textContent = profile.user_id;
+                document.getElementById('userEmailInfo').textContent = profile.email;
+                document.getElementById('userEmail').textContent = profile.email;
+                document.getElementById('userName').textContent = profile.name || 'N/A';
+                document.getElementById('userRoles').textContent = profile.roles.join(', ');
+                document.getElementById('lastLogin').textContent = profile.last_login_at
+                    ? new Date(profile.last_login_at).toLocaleString()
+                    : 'N/A';
+
+                document.getElementById('profileLoading').style.display = 'none';
+                document.getElementById('profileContent').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+                alert('Failed to load profile');
+            }
+        }
+
+        // Load 2FA status
+        async function load2FAStatus() {
+            try {
+                const status = await apiCall('/auth/2fa/status');
+
+                const statusText = status.enabled
+                    ? `<span class="tfa-enabled">✓ Enabled (${status.methods.join(', ')})</span>`
+                    : '<span class="tfa-disabled">⚠ Not Enabled</span>';
+
+                document.getElementById('tfaStatus').innerHTML = statusText;
+
+                document.getElementById('tfaLoading').style.display = 'none';
+                document.getElementById('tfaContent').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load 2FA status:', error);
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const sessions = await apiCall('/auth/sessions');
+
+                const sessionsList = document.getElementById('sessionsList');
+                sessionsList.innerHTML = '';
+
+                if (sessions.length === 0) {
+                    sessionsList.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No active sessions</p>';
+                } else {
+                    sessions.forEach(session => {
+                        const li = document.createElement('li');
+                        li.className = 'session-item';
+
+                        const deviceIcon = session.device_type === 'mobile' ? '📱' :
+                                         session.device_type === 'tablet' ? '📱' : '💻';
+
+                        li.innerHTML = `
+                            <div class="session-info">
+                                <div class="session-device">
+                                    ${deviceIcon} ${session.device_name || 'Unknown Device'}
+                                    ${session.is_current ? '<span class="session-current">Current Session</span>' : ''}
+                                </div>
+                                <div class="session-details">
+                                    ${session.os || 'Unknown OS'} · ${session.browser || 'Unknown Browser'}<br>
+                                    ${session.location || 'Unknown Location'} · IP: ${session.ip_address || 'Unknown'}<br>
+                                    Last active: ${new Date(session.last_activity_at).toLocaleString()}
+                                </div>
+                            </div>
+                            ${!session.is_current ? `
+                                <button class="btn btn-danger" onclick="logoutSession('${session.session_id}')">
+                                    Logout
+                                </button>
+                            ` : ''}
+                        `;
+
+                        sessionsList.appendChild(li);
+                    });
+                }
+
+                document.getElementById('sessionsLoading').style.display = 'none';
+                document.getElementById('sessionsContent').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load sessions:', error);
+            }
+        }
+
+        // Logout session
+        async function logoutSession(sessionId) {
+            if (!confirm('Are you sure you want to logout this device?')) {
+                return;
+            }
+
+            try {
+                await apiCall(`/auth/sessions/${sessionId}`, {
+                    method: 'DELETE',
+                });
+
+                alert('Device logged out successfully');
+                loadSessions(); // Reload sessions
+            } catch (error) {
+                alert('Failed to logout device: ' + error.message);
+            }
+        }
+
+        // Logout all devices
+        async function logoutAllDevices() {
+            if (!confirm('Are you sure you want to logout all other devices?')) {
+                return;
+            }
+
+            try {
+                const result = await apiCall('/auth/logout-all', {
+                    method: 'POST',
+                });
+
+                alert(result.message);
+                loadSessions(); // Reload sessions
+            } catch (error) {
+                alert('Failed to logout devices: ' + error.message);
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await apiCall('/auth/logout', {
+                    method: 'POST',
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Load all data
+        loadProfile();
+        load2FAStatus();
+        loadSessions();
+    </script>
+</body>
+</html>

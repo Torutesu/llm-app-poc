@@ -1,0 +1,68 @@
+# Single-tenant (dedicated) deployment configuration
+# Use this for enterprise customers requiring dedicated instances
+
+mode: single_tenant
+
+# Fixed tenant for this instance
+tenant_id: "acme_corp"  # Set this to customer's tenant ID
+tenant_name: "Acme Corporation"
+
+# Tenant isolation (physical separation - this is the only tenant)
+isolation_level: physical
+require_tenant_in_request: false  # Not needed since tenant is fixed
+enforce_tenant_isolation: false  # No other tenants to isolate from
+
+# Feature flags
+enable_cross_tenant_analytics: false  # N/A for single tenant
+enable_audit_logging: true
+
+# Data source configuration (dedicated to this tenant)
+data_sources:
+  filesystem:
+    enabled: true
+    path: "./data"  # All data belongs to this tenant
+    format: "binary"
+
+  google_drive:
+    enabled: true
+    # Customer's own service account credentials
+    service_account_json: !env GDRIVE_SERVICE_ACCOUNT_JSON
+    refresh_interval: 30
+
+  sharepoint:
+    enabled: true
+    tenant: !env SHAREPOINT_TENANT
+    client_id: !env SHAREPOINT_CLIENT_ID
+    client_secret: !env SHAREPOINT_CLIENT_SECRET
+    root_path: "Shared Documents"
+
+# Index configuration (dedicated instance)
+index:
+  type: usearch
+  dimensions: 1536
+  tenant_aware: false  # No need for tenant tagging
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  rate_limit: 1000  # Higher limit for dedicated instance
+  require_authentication: true
+  # Customer-specific auth (SSO integration)
+  sso_enabled: true
+  sso_provider: "okta"
+  sso_domain: "acme.okta.com"
+
+# Resource limits (no hard limits for dedicated instance)
+limits:
+  max_documents: null  # Unlimited
+  max_storage_gb: null  # Unlimited
+  max_concurrent_queries: 50  # Higher concurrency
+
+# Custom features for enterprise tier
+features:
+  custom_model: true  # Allow customer to use their own models
+  custom_embeddings: true
+  advanced_security: true
+  vpc_peering: true
+  dedicated_support: true

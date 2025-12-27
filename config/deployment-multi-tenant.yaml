@@ -1,0 +1,45 @@
+# Multi-tenant deployment configuration
+# Use this for shared SaaS environment serving multiple organizations
+
+mode: multi_tenant
+
+# Tenant isolation settings
+isolation_level: logical  # Use logical separation (tenant_id filtering)
+require_tenant_in_request: true
+enforce_tenant_isolation: true
+
+# Feature flags
+enable_cross_tenant_analytics: true  # Allow aggregated metrics
+enable_audit_logging: true
+
+# Data source configuration (shared across tenants)
+# Documents are stored in tenant-specific folders
+data_sources:
+  filesystem:
+    enabled: true
+    path: "./data/tenants/{tenant_id}"  # {tenant_id} will be replaced dynamically
+    format: "binary"
+
+  google_drive:
+    enabled: false
+    # Service account per tenant would be configured in database
+
+# Index configuration (logical multi-tenancy)
+index:
+  type: usearch  # or tantivy
+  dimensions: 1536
+  # Documents tagged with tenant_id metadata
+  tenant_aware: true
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  rate_limit_per_tenant: 100  # requests per minute per tenant
+  require_authentication: true
+
+# Resource limits (per tenant)
+limits:
+  max_documents_per_tenant: 10000
+  max_storage_per_tenant_gb: 50
+  max_concurrent_queries: 10

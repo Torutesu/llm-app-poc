@@ -1,0 +1,28 @@
+# Authentication System Requirements
+
+# JWT handling
+PyJWT==2.8.0
+
+# TOTP/2FA
+pyotp==2.9.0
+
+# Data validation
+pydantic==2.5.0
+email-validator==2.1.0
+
+# Optional: For production deployments
+
+# SMS providers
+# twilio==8.10.0  # For Twilio SMS
+# boto3==1.34.0   # For AWS SNS
+
+# Email providers
+# sendgrid==6.11.0   # For SendGrid
+# boto3==1.34.0      # For AWS SES
+
+# Session storage (production)
+# redis==5.0.1       # For Redis session storage
+# psycopg2-binary==2.9.9  # For PostgreSQL
+
+# User agent parsing
+# user-agents==2.2.0
