@@ -1,22 +1,24 @@
 """
 Main FastAPI application.
 
-Authentication API server with:
+Enterprise Search & RAG API with:
 - User authentication
 - Two-factor authentication
 - Password reset
 - Session management
+- External service connectors (Slack, Google Drive, etc.)
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.auth_api import router as auth_router
+from api.connector_api import router as connector_router
 
 # Create FastAPI app
 app = FastAPI(
-    title="LLM App Authentication API",
-    description="Authentication system with 2FA, password reset, and session management",
+    title="Enterprise Search & RAG API",
+    description="Authentication and connector system for enterprise search with RAG",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -33,6 +35,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(connector_router)
 
 
 # Health check endpoint
@@ -47,10 +50,15 @@ async def health_check():
 async def root():
     """Root endpoint."""
     return {
-        "message": "LLM App Authentication API",
+        "message": "Enterprise Search & RAG API",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "features": [
+            "Authentication (JWT, 2FA, OAuth)",
+            "Connectors (Slack, Google Drive, Notion, etc.)",
+            "RAG Search (Coming soon)"
+        ]
     }
 
 

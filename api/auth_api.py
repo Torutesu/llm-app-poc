@@ -7,6 +7,7 @@ Provides REST API for:
 - Password reset
 - Session management
 """
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -19,6 +20,9 @@ from auth.password_reset import PasswordResetManager
 from auth.session_manager import DeviceInfo, SessionManager, parse_user_agent
 from auth.two_factor import TwoFactorManager
 from auth.user_manager import User, UserManager
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Initialize router
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -152,10 +156,13 @@ async def get_current_user(
         HTTPException: If token is invalid or user not found
     """
     token = credentials.credentials
+    logger.debug(f"Authenticating with token: {token[:50]}...")
 
     try:
         claims = jwt_handler.verify_token(token)
+        logger.debug(f"Token verified for user_id: {claims.sub}")
     except Exception as e:
+        logger.warning(f"Token verification failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid authentication token: {str(e)}",
@@ -165,6 +172,7 @@ async def get_current_user(
     user = user_manager.get_user(claims.sub)
 
     if not user:
+        logger.warning(f"User not found: {claims.sub}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
@@ -172,11 +180,13 @@ async def get_current_user(
         )
 
     if not user.is_active:
+        logger.warning(f"User account inactive: {claims.sub}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
 
+    logger.debug(f"Authentication successful for user: {claims.sub}")
     return user
 
 

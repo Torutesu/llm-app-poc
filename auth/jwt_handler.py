@@ -7,7 +7,7 @@ Supports:
 - Claims extraction (user_id, tenant_id, roles)
 """
 import logging
-from datetime import datetime, timedelta
+import time
 from typing import Dict, List, Optional
 
 import jwt
@@ -99,8 +99,8 @@ class JWTHandler:
         Returns:
             Encoded JWT token string
         """
-        now = datetime.utcnow()
-        exp = now + timedelta(minutes=self.config.access_token_expire_minutes)
+        now = int(time.time())
+        exp = now + (self.config.access_token_expire_minutes * 60)
 
         claims = {
             "sub": user_id,
@@ -108,8 +108,8 @@ class JWTHandler:
             "email": email,
             "roles": roles or [],
             "permissions": permissions or [],
-            "exp": int(exp.timestamp()),
-            "iat": int(now.timestamp()),
+            "exp": exp,
+            "iat": now,
             "iss": self.config.issuer,
             "aud": self.config.audience,
             "token_type": "access"
@@ -149,14 +149,14 @@ class JWTHandler:
         Returns:
             Encoded JWT refresh token
         """
-        now = datetime.utcnow()
-        exp = now + timedelta(days=self.config.refresh_token_expire_days)
+        now = int(time.time())
+        exp = now + (self.config.refresh_token_expire_days * 24 * 60 * 60)
 
         claims = {
             "sub": user_id,
             "tenant_id": tenant_id,
-            "exp": int(exp.timestamp()),
-            "iat": int(now.timestamp()),
+            "exp": exp,
+            "iat": now,
             "iss": self.config.issuer,
             "aud": self.config.audience,
             "token_type": "refresh"

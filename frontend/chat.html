@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Enterprise Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .nav {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav a {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .nav a.active {
+            color: #667eea;
+            background: #f0f0ff;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .new-chat-btn:hover {
+            opacity: 0.9;
+        }
+
+        .chat-list {
+            list-style: none;
+        }
+
+        .chat-item {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-item:hover {
+            background: #f5f7fa;
+        }
+
+        .chat-item.active {
+            background: #f0f0ff;
+            color: #667eea;
+        }
+
+        .chat-item-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-item-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .welcome {
+            text-align: center;
+            padding: 100px 40px;
+            color: #666;
+        }
+
+        .welcome h2 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .welcome p {
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .suggestion-card {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .suggestion-card:hover {
+            background: #f0f0ff;
+            transform: translateY(-2px);
+        }
+
+        .suggestion-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .suggestion-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.assistant .message-avatar {
+            background: #f0f0f0;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-text {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .message.assistant .message-text {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .message-sources {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f0f0ff;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .message-sources-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .source-link {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 4px;
+            padding: 4px 0;
+        }
+
+        .source-link:hover {
+            color: #667eea;
+        }
+
+        .input-container {
+            padding: 20px 30px;
+            border-top: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .input-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            min-height: 52px;
+            max-height: 200px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 52px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .info-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🔐 Enterprise Search</h1>
+            <nav class="nav">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="chat.html" class="active">💬 Chat</a>
+                <a href="connectors.html">🔌 Connectors</a>
+            </nav>
+        </div>
+        <div class="header-actions">
+            <span id="userEmail" style="color: #666;"></span>
+            <a href="#" onclick="logout()" style="color: #666; text-decoration: none;">Logout</a>
+        </div>
+    </div>
+
+    <div class="info-banner">
+        ⚠️ RAG検索機能は実装中です。現在はチャット画面のUIプレビューのみ表示されています。
+    </div>
+
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+
+            <h2>Recent Chats</h2>
+            <ul class="chat-list" id="chatList">
+                <li class="chat-item active">
+                    <div class="chat-item-title">Welcome to Enterprise Search</div>
+                    <div class="chat-item-time">Just now</div>
+                </li>
+                <li class="chat-item">
+                    <div class="chat-item-title">Slack messages about Q4 planning</div>
+                    <div class="chat-item-time">2 hours ago</div>
+                </li>
+                <li class="chat-item">
+                    <div class="chat-item-title">Google Drive documents on product roadmap</div>
+                    <div class="chat-item-time">Yesterday</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="main-chat">
+            <div class="messages-container" id="messagesContainer">
+                <!-- Welcome Screen -->
+                <div class="welcome" id="welcomeScreen">
+                    <h2>👋 Enterprise Search with RAG</h2>
+                    <p>Ask questions about your company's data across Slack, Google Drive, and more</p>
+
+                    <div class="suggestions">
+                        <div class="suggestion-card" onclick="sendSuggestion('What were the key points from yesterday\'s team meeting?')">
+                            <div class="suggestion-icon">💬</div>
+                            <div class="suggestion-text">What were the key points from yesterday's team meeting?</div>
+                        </div>
+
+                        <div class="suggestion-card" onclick="sendSuggestion('Find the latest Q4 planning documents')">
+                            <div class="suggestion-icon">📊</div>
+                            <div class="suggestion-text">Find the latest Q4 planning documents</div>
+                        </div>
+
+                        <div class="suggestion-card" onclick="sendSuggestion('Show me recent discussions about the product roadmap')">
+                            <div class="suggestion-icon">🗺️</div>
+                            <div class="suggestion-text">Show me recent discussions about the product roadmap</div>
+                        </div>
+
+                        <div class="suggestion-card" onclick="sendSuggestion('What are the upcoming project deadlines?')">
+                            <div class="suggestion-icon">📅</div>
+                            <div class="suggestion-text">What are the upcoming project deadlines?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages will appear here -->
+                <div id="messagesList"></div>
+            </div>
+
+            <!-- Input -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="input-box">
+                        <textarea
+                            id="messageInput"
+                            placeholder="Ask anything about your company's data..."
+                            onkeydown="handleKeyPress(event)"
+                        ></textarea>
+                    </div>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Logout
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            const token = localStorage.getItem('accessToken');
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('userEmail').textContent = user.email;
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+            }
+        }
+
+        // New chat
+        function newChat() {
+            document.getElementById('messagesList').innerHTML = '';
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('messageInput').value = '';
+        }
+
+        // Send suggestion
+        function sendSuggestion(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Send message (mock implementation)
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Hide welcome screen
+            document.getElementById('welcomeScreen').style.display = 'none';
+
+            // Add user message
+            addMessage('user', message);
+
+            // Clear input
+            input.value = '';
+
+            // Show typing indicator
+            const typingId = addTypingIndicator();
+
+            // Disable send button
+            document.getElementById('sendBtn').disabled = true;
+
+            // Simulate API call (replace with actual RAG API later)
+            setTimeout(() => {
+                removeTypingIndicator(typingId);
+
+                // Mock response
+                const response = `これは実装予定のRAG検索機能からの回答です。
+
+実際には以下のように動作します：
+1. あなたの質問を理解
+2. 接続されたコネクタ（Slack、Google Driveなど）から関連情報を検索
+3. LLMを使って回答を生成
+4. 情報源を表示
+
+現在はUIプレビューのみです。RAG検索機能は次のフェーズで実装予定です。`;
+
+                addMessage('assistant', response, [
+                    { title: 'Slack - #product-team', url: '#' },
+                    { title: 'Google Drive - Q4 Planning.docx', url: '#' }
+                ]);
+
+                document.getElementById('sendBtn').disabled = false;
+            }, 2000);
+        }
+
+        // Add message to chat
+        function addMessage(role, content, sources = []) {
+            const messagesList = document.getElementById('messagesList');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = role === 'user' ? '👤' : '🤖';
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-text">${content}</div>
+                    ${sources.length > 0 ? `
+                        <div class="message-sources">
+                            <div class="message-sources-title">📚 Sources:</div>
+                            ${sources.map(s => `
+                                <a href="${s.url}" class="source-link">
+                                    ${s.title}
+                                </a>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            messagesList.appendChild(messageDiv);
+
+            // Scroll to bottom
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Add typing indicator
+        function addTypingIndicator() {
+            const messagesList = document.getElementById('messagesList');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            messageDiv.id = 'typing-indicator';
+
+            messageDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+
+            messagesList.appendChild(messageDiv);
+
+            // Scroll to bottom
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+
+            return 'typing-indicator';
+        }
+
+        // Remove typing indicator
+        function removeTypingIndicator(id) {
+            const indicator = document.getElementById(id);
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('messageInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+
+        // Initialize
+        if (checkAuth()) {
+            loadUserInfo();
+        }
+    </script>
+</body>
+</html>
