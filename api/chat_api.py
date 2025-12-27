@@ -53,6 +53,11 @@ class ChatQueryRequest(BaseModel):
         description="Previous messages in conversation"
     )
     max_sources: int = Field(default=5, description="Maximum sources to retrieve")
+    use_web_search: bool = Field(default=True, description="Enable web search fallback")
+    search_mode: str = Field(
+        default="auto",
+        description="Search mode: auto, rag_only, web_only, llm_only"
+    )
 
 
 class ChatQueryResponse(BaseModel):
@@ -116,26 +121,51 @@ async def chat_query(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Query chat with RAG search.
+    Query chat with RAG search, Web search, or LLM.
 
-    This endpoint:
-    1. Searches across connected data sources (Slack, Drive, etc.)
-    2. Retrieves relevant context
-    3. Generates an answer using LLM
-    4. Returns answer with sources
+    Search modes:
+    - auto: Try RAG first, fallback to Web search, then LLM
+    - rag_only: Only search connected data sources
+    - web_only: Only use web search
+    - llm_only: Direct LLM response without context
     """
     try:
-        logger.info(f"Chat query from user {current_user.user_id}: {request.query}")
+        logger.info(f"Chat query from user {current_user.user_id}: {request.query} (mode: {request.search_mode})")
 
-        # TODO: Implement real RAG search
-        # 1. Vector search across indexed documents
-        # 2. Retrieve relevant sources
-        # 3. Call LLM with context
-        # 4. Stream response
+        sources = []
+        answer = ""
 
-        # For now, return mock response
-        answer = generate_mock_answer(request.query, current_user)
-        sources = get_mock_sources(request.query, request.max_sources)
+        # Determine search strategy
+        if request.search_mode == "llm_only":
+            # Direct LLM response
+            answer = generate_llm_answer(request.query, request.conversation_history)
+
+        elif request.search_mode == "web_only":
+            # Web search only
+            sources = await perform_web_search(request.query, request.max_sources)
+            answer = generate_answer_from_sources(request.query, sources, "web")
+
+        elif request.search_mode == "rag_only":
+            # RAG search only (connected data sources)
+            sources = await perform_rag_search(request.query, current_user.tenant_id, request.max_sources)
+            answer = generate_answer_from_sources(request.query, sources, "rag")
+
+        else:  # auto mode
+            # Try RAG first
+            sources = await perform_rag_search(request.query, current_user.tenant_id, request.max_sources)
+
+            # If no good RAG results and web search enabled, try web search
+            if (not sources or all(s.get("score", 0) < 0.5 for s in sources)) and request.use_web_search:
+                logger.info("RAG sources insufficient, trying web search")
+                web_sources = await perform_web_search(request.query, 3)
+                sources.extend(web_sources)
+
+            # If still no sources, use LLM directly
+            if not sources:
+                logger.info("No sources found, using LLM directly")
+                answer = generate_llm_answer(request.query, request.conversation_history)
+            else:
+                answer = generate_answer_from_sources(request.query, sources, "hybrid")
 
         return ChatQueryResponse(
             answer=answer,

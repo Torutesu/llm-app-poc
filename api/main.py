@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.auth_api import router as auth_router
+from api.chat_api import router as chat_router
 from api.connector_api import router as connector_router
 
 # Create FastAPI app
@@ -35,6 +36,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(chat_router)
 app.include_router(connector_router)
 
 
@@ -57,7 +59,7 @@ async def root():
         "features": [
             "Authentication (JWT, 2FA, OAuth)",
             "Connectors (Slack, Google Drive, Notion, etc.)",
-            "RAG Search (Coming soon)"
+            "RAG Search & Chat"
         ]
     }
 

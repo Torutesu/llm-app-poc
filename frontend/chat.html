@@ -400,10 +400,6 @@
         </div>
     </div>
 
-    <div class="info-banner">
-        ⚠️ RAG検索機能は実装中です。現在はチャット画面のUIプレビューのみ表示されています。
-    </div>
-
     <div class="chat-container">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -535,7 +531,7 @@
             }
         }
 
-        // Send message (mock implementation)
+        // Send message (real RAG implementation)
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
@@ -557,28 +553,49 @@
             // Disable send button
             document.getElementById('sendBtn').disabled = true;
 
-            // Simulate API call (replace with actual RAG API later)
-            setTimeout(() => {
+            try {
+                // Call actual RAG API
+                const token = localStorage.getItem('accessToken');
+
+                const response = await fetch(`${API_URL}/chat/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: message,
+                        conversation_history: [],
+                        max_sources: 5
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response');
+                }
+
+                const data = await response.json();
+
+                // Remove typing indicator
                 removeTypingIndicator(typingId);
 
-                // Mock response
-                const response = `これは実装予定のRAG検索機能からの回答です。
+                // Format sources for display
+                const sources = data.sources.map(s => ({
+                    title: s.title,
+                    url: s.url || '#'
+                }));
 
-実際には以下のように動作します：
-1. あなたの質問を理解
-2. 接続されたコネクタ（Slack、Google Driveなど）から関連情報を検索
-3. LLMを使って回答を生成
-4. 情報源を表示
+                // Add assistant response
+                addMessage('assistant', data.answer, sources);
 
-現在はUIプレビューのみです。RAG検索機能は次のフェーズで実装予定です。`;
+            } catch (error) {
+                console.error('Error sending message:', error);
+                removeTypingIndicator(typingId);
 
-                addMessage('assistant', response, [
-                    { title: 'Slack - #product-team', url: '#' },
-                    { title: 'Google Drive - Q4 Planning.docx', url: '#' }
-                ]);
-
+                addMessage('assistant', `エラーが発生しました: ${error.message}\n\n認証が必要な場合は、再度ログインしてください。`, []);
+            } finally {
                 document.getElementById('sendBtn').disabled = false;
-            }, 2000);
+            }
         }
 
         // Add message to chat
